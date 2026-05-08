@@ -6,234 +6,295 @@
 <meta name="theme-color" content="#0c0c1a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="भ्वाइस कल">
 <title>नेपाली भ्वाइस कल</title>
+
+<!-- PWA Manifest inline -->
+<script>
+const manifestData = {
+  name: "नेपाली भ्वाइस कल",
+  short_name: "भ्वाइस कल",
+  description: "Voice-activated dialer for Nepal",
+  start_url: "./",
+  display: "standalone",
+  background_color: "#0c0c1a",
+  theme_color: "#0c0c1a",
+  orientation: "portrait",
+  icons: [
+    { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%230c0c1a' rx='32'/%3E%3Ctext x='96' y='130' font-size='100' text-anchor='middle'%3E%F0%9F%8E%A4%3C/text%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" },
+    { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%230c0c1a' rx='80'/%3E%3Ctext x='256' y='340' font-size='260' text-anchor='middle'%3E%F0%9F%8E%A4%3C/text%3E%3C/svg%3E", sizes: "512x512", type: "image/svg+xml" }
+  ]
+};
+const blob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+const manifestURL = URL.createObjectURL(blob);
+document.write('<link rel="manifest" href="' + manifestURL + '">');
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
 <style>
-  :root {
-    --bg:       #0c0c1a;
-    --card:     #13132b;
-    --border:   #2a2a4a;
-    --accent:   #e8c84a;
-    --green:    #4ae8a0;
-    --red:      #e84a4a;
-    --blue:     #4a9ee8;
-    --text:     #f0eedd;
-    --muted:    #6b6b8a;
-    --font-ne:  'Tiro Devanagari Hindi', serif;
-    --font-en:  'Space Mono', monospace;
-  }
+:root {
+  --bg:      #0c0c1a;
+  --card:    #13132b;
+  --border:  #2a2a4a;
+  --accent:  #e8c84a;
+  --green:   #4ae8a0;
+  --red:     #e84a4a;
+  --blue:    #4a9ee8;
+  --text:    #f0eedd;
+  --muted:   #6b6b8a;
+  --ne:      'Tiro Devanagari Hindi', serif;
+  --en:      'Space Mono', monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: var(--ne); min-height: 100dvh; overflow-x: hidden;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-ne);
-    min-height: 100dvh;
-    overflow-x: hidden;
-  }
+.app { max-width: 440px; margin: 0 auto; padding: 16px 16px 60px; }
 
-  /* ── noise texture overlay ── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none; z-index: 0; opacity: 0.5;
-  }
+/* header */
+.header { text-align: center; padding: 16px 0 20px; }
+.header h1 { font-size: 1.5rem; font-weight: 400; }
+.header p  { font-family: var(--en); font-size: 0.6rem; color: var(--muted); margin-top: 3px; letter-spacing: 2px; text-transform: uppercase; }
 
-  .app { position: relative; z-index: 1; max-width: 440px; margin: 0 auto; padding: 24px 16px 40px; }
+/* install banner */
+.install-banner {
+  background: linear-gradient(135deg, #1a1a35, #12122a);
+  border: 1px solid var(--accent);
+  border-radius: 12px; padding: 12px 14px;
+  margin-bottom: 16px; display: none;
+  align-items: center; gap: 12px;
+}
+.install-banner.show { display: flex; }
+.install-banner span { flex: 1; font-size: 0.85rem; color: var(--accent); }
+.install-btn {
+  background: var(--accent); color: var(--bg);
+  border: none; border-radius: 8px; padding: 8px 14px;
+  font-family: var(--ne); font-size: 0.85rem; font-weight: 700; cursor: pointer;
+}
 
-  /* ── header ── */
-  .header { text-align: center; padding: 20px 0 28px; }
-  .header h1 { font-size: 1.6rem; font-weight: 400; letter-spacing: 0.5px; color: var(--text); }
-  .header p  { font-family: var(--font-en); font-size: 0.65rem; color: var(--muted); margin-top: 4px; letter-spacing: 2px; text-transform: uppercase; }
+/* tabs */
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--border); border-radius: 12px; padding: 3px; margin-bottom: 20px; }
+.tab { padding: 10px; text-align: center; border-radius: 9px; cursor: pointer; font-size: 0.95rem; color: var(--muted); transition: all .2s; }
+.tab.active { background: var(--card); color: var(--text); }
 
-  /* ── tabs ── */
-  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--border); border-radius: 12px; padding: 3px; margin-bottom: 24px; }
-  .tab { padding: 10px; text-align: center; border-radius: 9px; cursor: pointer; font-family: var(--font-ne); font-size: 0.95rem; color: var(--muted); transition: all .2s; }
-  .tab.active { background: var(--card); color: var(--text); }
+.section { display: none; }
+.section.active { display: block; }
 
-  /* ── section ── */
-  .section { display: none; }
-  .section.active { display: block; }
+/* ── ALWAYS-ON LISTENING UI ── */
+.listen-center { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 8px 0 20px; }
 
-  /* ── big listen button ── */
-  .listen-wrap { display: flex; flex-direction: column; align-items: center; padding: 12px 0 28px; }
+/* big pulsing ring */
+.pulse-ring {
+  position: relative; width: 180px; height: 180px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pulse-ring::before, .pulse-ring::after {
+  content: ''; position: absolute; border-radius: 50%;
+  border: 2px solid var(--green); opacity: 0;
+}
+.pulse-ring::before { inset: -10px; }
+.pulse-ring::after  { inset: -22px; }
+.pulse-ring.active::before { animation: ringPulse 1.4s ease-out infinite; }
+.pulse-ring.active::after  { animation: ringPulse 1.4s ease-out infinite 0.4s; }
+@keyframes ringPulse {
+  0%   { opacity: 0.8; transform: scale(0.92); }
+  100% { opacity: 0;   transform: scale(1.1); }
+}
 
-  .listen-btn {
-    width: 160px; height: 160px; border-radius: 50%;
-    background: var(--card);
-    border: 2px solid var(--border);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    cursor: pointer; position: relative;
-    transition: border-color .3s, transform .1s;
-    -webkit-user-select: none; user-select: none;
-  }
-  .listen-btn:active { transform: scale(0.96); }
-  .listen-btn.listening { border-color: var(--green); }
-  .listen-btn.listening::before {
-    content: '';
-    position: absolute; inset: -8px; border-radius: 50%;
-    border: 2px solid var(--green);
-    animation: ripple 1.2s ease-out infinite;
-  }
-  .listen-btn.listening::after {
-    content: '';
-    position: absolute; inset: -18px; border-radius: 50%;
-    border: 1px solid var(--green);
-    animation: ripple 1.2s ease-out infinite .4s;
-    opacity: .5;
-  }
-  @keyframes ripple {
-    0%   { transform: scale(0.9); opacity: 1; }
-    100% { transform: scale(1.15); opacity: 0; }
-  }
+.main-orb {
+  width: 160px; height: 160px; border-radius: 50%;
+  background: var(--card);
+  border: 2px solid var(--border);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; transition: border-color .3s, transform .15s;
+  -webkit-user-select: none; user-select: none;
+  position: relative; overflow: hidden;
+}
+.main-orb:active { transform: scale(0.96); }
+.main-orb.active { border-color: var(--green); }
+.main-orb.hearing { border-color: var(--accent); }
 
-  .mic-icon { font-size: 3rem; margin-bottom: 6px; }
-  .mic-label { font-family: var(--font-en); font-size: 0.65rem; letter-spacing: 2px; color: var(--muted); }
-  .listen-btn.listening .mic-label { color: var(--green); }
+/* waveform bars inside orb when active */
+.wave-bars {
+  display: flex; align-items: center; gap: 3px; height: 30px;
+  opacity: 0; transition: opacity .3s;
+}
+.wave-bars.show { opacity: 1; }
+.wave-bar {
+  width: 3px; background: var(--green); border-radius: 2px;
+  animation: none; height: 6px;
+}
+.main-orb.active .wave-bar:nth-child(1) { animation: wave 0.8s ease-in-out infinite 0.0s; }
+.main-orb.active .wave-bar:nth-child(2) { animation: wave 0.8s ease-in-out infinite 0.1s; }
+.main-orb.active .wave-bar:nth-child(3) { animation: wave 0.8s ease-in-out infinite 0.2s; }
+.main-orb.active .wave-bar:nth-child(4) { animation: wave 0.8s ease-in-out infinite 0.15s; }
+.main-orb.active .wave-bar:nth-child(5) { animation: wave 0.8s ease-in-out infinite 0.05s; }
+@keyframes wave {
+  0%,100% { height: 6px; }
+  50%      { height: 28px; }
+}
+.orb-icon  { font-size: 2.8rem; }
+.orb-label { font-family: var(--en); font-size: 0.6rem; letter-spacing: 2px; color: var(--muted); }
+.main-orb.active .orb-label { color: var(--green); }
 
-  /* ── status box ── */
-  .status-box {
-    margin-top: 16px; width: 100%;
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 16px; min-height: 80px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-    transition: border-color .3s;
-  }
-  .status-box.ok   { border-color: var(--green); }
-  .status-box.err  { border-color: var(--red); }
-  .status-box.info { border-color: var(--accent); }
+/* status strip */
+.status-strip {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px 16px; min-height: 72px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  transition: border-color .3s;
+}
+.status-strip.ok   { border-color: var(--green); }
+.status-strip.err  { border-color: var(--red); }
+.status-strip.info { border-color: var(--accent); }
+.status-strip .s-msg   { font-size: 1rem; text-align: center; }
+.status-strip .s-heard { font-family: var(--en); font-size: 0.72rem; color: var(--muted); text-align: center; }
 
-  .status-heard { font-size: 0.8rem; color: var(--muted); font-family: var(--font-en); }
-  .status-name  { font-size: 1.4rem; color: var(--accent); font-weight: 400; }
-  .status-msg   { font-size: 1rem; }
-  .status-phone { font-family: var(--font-en); font-size: 0.8rem; color: var(--muted); }
+/* permission status */
+.perm-row {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+}
+.perm-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.perm-dot.granted { background: var(--green); }
+.perm-dot.denied  { background: var(--red); }
+.perm-text { font-family: var(--en); font-size: 0.7rem; color: var(--muted); flex: 1; letter-spacing: 0.5px; }
+.perm-btn {
+  background: transparent; border: 1px solid var(--accent);
+  color: var(--accent); border-radius: 6px; padding: 5px 10px;
+  font-family: var(--en); font-size: 0.65rem; cursor: pointer;
+}
 
-  /* ── contact cards ── */
-  .contacts-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .contacts-header span { font-family: var(--font-en); font-size: 0.7rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-  .add-btn {
-    background: var(--accent); color: var(--bg);
-    border: none; border-radius: 8px; padding: 8px 16px;
-    font-family: var(--font-ne); font-size: 0.9rem; cursor: pointer;
-    font-weight: 700;
-  }
+/* how to use */
+.howto { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-top: 4px; }
+.howto-title { font-family: var(--en); font-size: 0.6rem; color: var(--muted); letter-spacing: 1.5px; margin-bottom: 10px; }
+.howto-step  { display: flex; gap: 10px; padding: 5px 0; font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+.howto-step b { color: var(--text); }
+.howto-step .num { color: var(--accent); flex-shrink: 0; }
 
-  .contact-list { display: flex; flex-direction: column; gap: 10px; }
+/* contacts */
+.contacts-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.contacts-hdr span { font-family: var(--en); font-size: 0.65rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.add-btn { background: var(--accent); color: var(--bg); border: none; border-radius: 8px; padding: 8px 16px; font-family: var(--ne); font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+.contact-list { display: flex; flex-direction: column; gap: 10px; }
 
-  .contact-card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 14px 16px;
-    display: flex; align-items: center; gap: 14px;
-  }
-  .contact-card.has-cmd { border-color: rgba(74,232,160,0.3); }
+.contact-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 12px 14px;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.contact-card.has-cmd { border-color: rgba(74,232,160,0.3); }
+.c-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: #1a1a3a; border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0; margin-top: 1px;
+}
+.c-info { flex: 1; min-width: 0; }
+.c-name  { font-size: 1rem; margin-bottom: 2px; }
+.c-phone { font-family: var(--en); font-size: 0.7rem; color: var(--muted); }
+.c-cmds  { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+.cmd-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(74,232,160,0.08); border: 1px solid rgba(74,232,160,0.2);
+  border-radius: 6px; padding: 3px 8px; font-size: 0.72rem; color: var(--green); font-style: italic;
+}
+.cmd-del { cursor: pointer; color: var(--red); font-style: normal; font-size: 0.9rem; }
+.no-cmd  { font-size: 0.72rem; color: var(--muted); font-style: italic; }
 
-  .contact-avatar {
-    width: 44px; height: 44px; border-radius: 50%;
-    background: linear-gradient(135deg, #2a2a5a, #1a1a3a);
-    border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem; flex-shrink: 0;
-  }
-  .contact-info { flex: 1; min-width: 0; }
-  .contact-name  { font-size: 1.05rem; margin-bottom: 2px; }
-  .contact-phone { font-family: var(--font-en); font-size: 0.72rem; color: var(--muted); }
-  .contact-cmd   { font-size: 0.75rem; color: var(--green); margin-top: 3px; font-style: italic; }
+.c-actions { display: flex; flex-direction: column; gap: 6px; }
+.icon-btn {
+  width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--text); font-size: 0.95rem;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.icon-btn.call { border-color: rgba(74,232,160,0.4); color: var(--green); }
+.icon-btn.rec  { border-color: rgba(232,200,74,0.4); color: var(--accent); }
+.icon-btn.del  { border-color: rgba(232,74,74,0.3);  color: var(--red); }
 
-  .contact-actions { display: flex; gap: 8px; }
-  .icon-btn {
-    width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--border);
-    background: transparent; color: var(--text); font-size: 1rem;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    transition: background .2s;
-  }
-  .icon-btn:hover { background: var(--border); }
-  .icon-btn.call  { border-color: rgba(74,232,160,0.4); color: var(--green); }
-  .icon-btn.rec   { border-color: rgba(232,200,74,0.4); color: var(--accent); }
-  .icon-btn.del   { border-color: rgba(232,74,74,0.3);  color: var(--red); }
+/* modal */
+.modal-bg {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+  z-index: 100; align-items: flex-end; justify-content: center; backdrop-filter: blur(4px);
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px 20px 0 0; padding: 24px 18px 44px;
+  width: 100%; max-width: 440px;
+  animation: slideUp .22s ease-out;
+}
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } }
+.modal h2 { font-size: 1.15rem; margin-bottom: 18px; font-weight: 400; }
 
-  /* ── modal ── */
-  .modal-bg {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.75); z-index: 100;
-    align-items: flex-end; justify-content: center;
-    backdrop-filter: blur(4px);
-  }
-  .modal-bg.open { display: flex; }
+.field { margin-bottom: 14px; }
+.field label { font-size: 0.75rem; color: var(--muted); font-family: var(--en); letter-spacing: 1px; display: block; margin-bottom: 5px; }
+.field input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px 13px; color: var(--text);
+  font-family: var(--ne); font-size: 1rem; outline: none; transition: border-color .2s;
+}
+.field input:focus { border-color: var(--accent); }
+.modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+.btn-cancel { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 11px; color: var(--muted); font-family: var(--ne); font-size: 0.95rem; cursor: pointer; }
+.btn-save   { background: var(--accent); border: none; border-radius: 10px; padding: 11px; color: var(--bg); font-family: var(--ne); font-size: 0.95rem; font-weight: 700; cursor: pointer; }
 
-  .modal {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 20px 20px 0 0; padding: 28px 20px 40px;
-    width: 100%; max-width: 440px;
-    animation: slideUp .25s ease-out;
-  }
-  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+/* record modal */
+.rec-step { text-align: center; padding: 6px 0; }
+.rec-step p { color: var(--muted); font-size: 0.88rem; margin-bottom: 14px; line-height: 1.6; }
+.rec-example { background: var(--bg); border-radius: 10px; padding: 10px 14px; font-size: 1rem; color: var(--accent); margin-bottom: 16px; font-style: italic; }
+.rec-orb {
+  width: 90px; height: 90px; border-radius: 50%; margin: 0 auto 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border: 2px solid var(--border); background: var(--bg); cursor: pointer;
+  font-size: 1.8rem; gap: 3px; transition: all .2s;
+}
+.rec-orb.recording { border-color: var(--red); animation: recPulse 0.8s ease-in-out infinite; }
+.rec-orb.done      { border-color: var(--green); }
+@keyframes recPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(232,74,74,0.4); } 50% { box-shadow: 0 0 0 12px rgba(232,74,74,0); } }
+.rec-orb small { font-family: var(--en); font-size: 0.5rem; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+.rec-result { color: var(--green); font-size: 0.95rem; min-height: 26px; text-align: center; margin-top: 8px; }
 
-  .modal h2 { font-size: 1.2rem; margin-bottom: 20px; font-weight: 400; }
+/* calling overlay */
+.calling-overlay {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: linear-gradient(180deg, #081a0d 0%, #041008 100%);
+  flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+}
+.calling-overlay.show { display: flex; }
+.calling-avatar {
+  width: 96px; height: 96px; border-radius: 50%;
+  background: var(--card); border: 2px solid var(--green);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.4rem; animation: callPulse 1.5s ease-in-out infinite;
+}
+@keyframes callPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(74,232,160,0.4); } 50% { box-shadow: 0 0 0 20px rgba(74,232,160,0); } }
+.calling-name  { font-size: 1.8rem; }
+.calling-label { font-family: var(--en); font-size: 0.65rem; color: var(--green); letter-spacing: 3px; text-transform: uppercase; }
+.calling-tip   { font-size: 0.78rem; color: var(--muted); text-align: center; max-width: 260px; line-height: 1.5; }
 
-  .field { margin-bottom: 16px; }
-  .field label { font-size: 0.8rem; color: var(--muted); font-family: var(--font-en); letter-spacing: 1px; display: block; margin-bottom: 6px; }
-  .field input {
-    width: 100%; background: var(--bg); border: 1px solid var(--border);
-    border-radius: 10px; padding: 12px 14px; color: var(--text);
-    font-family: var(--font-ne); font-size: 1rem;
-    outline: none; transition: border-color .2s;
-  }
-  .field input:focus { border-color: var(--accent); }
+/* toast */
+.toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(60px);
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 11px 22px; font-size: 0.88rem;
+  transition: transform .3s; z-index: 400; white-space: nowrap;
+}
+.toast.show  { transform: translateX(-50%) translateY(0); }
+.toast.green { border-color: var(--green); color: var(--green); }
+.toast.red   { border-color: var(--red);   color: var(--red); }
+.toast.gold  { border-color: var(--accent); color: var(--accent); }
 
-  .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-  .btn-cancel { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--muted); font-family: var(--font-ne); font-size: 1rem; cursor: pointer; }
-  .btn-save   { background: var(--accent); border: none; border-radius: 10px; padding: 12px; color: var(--bg); font-family: var(--font-ne); font-size: 1rem; font-weight: 700; cursor: pointer; }
-
-  /* ── record command modal ── */
-  .rec-modal h2 { color: var(--accent); }
-
-  .rec-step { text-align: center; padding: 10px 0; }
-  .rec-step p { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; line-height: 1.6; }
-  .rec-step .example { background: var(--bg); border-radius: 10px; padding: 12px 16px; font-size: 1.05rem; color: var(--accent); margin-bottom: 18px; font-style: italic; }
-
-  .rec-big-btn {
-    width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 16px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    border: 2px solid var(--border); background: var(--bg); cursor: pointer;
-    font-size: 2rem; gap: 4px; transition: all .2s;
-  }
-  .rec-big-btn.recording { border-color: var(--red); animation: recPulse 0.8s ease-in-out infinite; }
-  .rec-big-btn.done      { border-color: var(--green); }
-  @keyframes recPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(232,74,74,0.4); } 50% { box-shadow: 0 0 0 12px rgba(232,74,74,0); } }
-
-  .rec-big-btn small { font-family: var(--font-en); font-size: 0.55rem; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
-  .rec-result { color: var(--green); font-size: 1rem; min-height: 28px; text-align: center; margin-top: 8px; }
-
-  /* ── empty state ── */
-  .empty { text-align: center; padding: 40px 20px; color: var(--muted); }
-  .empty div { font-size: 2.5rem; margin-bottom: 12px; }
-  .empty p { font-size: 0.9rem; line-height: 1.7; }
-
-  /* ── toast ── */
-  .toast {
-    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(60px);
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px 24px; font-size: 0.9rem;
-    transition: transform .3s; z-index: 200; white-space: nowrap;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast.green { border-color: var(--green); color: var(--green); }
-  .toast.red   { border-color: var(--red);   color: var(--red); }
-
-  /* ── call overlay ── */
-  .calling-overlay {
-    display: none; position: fixed; inset: 0; z-index: 300;
-    background: linear-gradient(180deg, #0a1a0f 0%, #051008 100%);
-    flex-direction: column; align-items: center; justify-content: center; gap: 18px;
-  }
-  .calling-overlay.show { display: flex; }
-  .calling-avatar { width: 100px; height: 100px; border-radius: 50%; background: var(--card); border: 2px solid var(--green); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; animation: callPulse 1.5s ease-in-out infinite; }
-  @keyframes callPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(74,232,160,0.4); } 50% { box-shadow: 0 0 0 20px rgba(74,232,160,0); } }
-  .calling-name  { font-size: 2rem; }
-  .calling-label { font-family: var(--font-en); font-size: 0.7rem; color: var(--green); letter-spacing: 3px; text-transform: uppercase; }
+/* empty */
+.empty { text-align: center; padding: 36px 16px; color: var(--muted); }
+.empty div { font-size: 2.4rem; margin-bottom: 10px; }
+.empty p   { font-size: 0.88rem; line-height: 1.7; }
 </style>
 </head>
 <body>
@@ -241,7 +302,13 @@
 
   <div class="header">
     <h1>नेपाली भ्वाइस कल</h1>
-    <p>Voice Dialer for Nepal</p>
+    <p>Always-On Voice Dialer · Nepal</p>
+  </div>
+
+  <!-- install banner -->
+  <div class="install-banner" id="installBanner">
+    <span>📱 Home Screen मा Install गर्नुस्!</span>
+    <button class="install-btn" onclick="installPWA()">Install</button>
   </div>
 
   <div class="tabs">
@@ -251,32 +318,45 @@
 
   <!-- ── CALL TAB ── -->
   <div class="section active" id="tab-call">
-    <div class="listen-wrap">
-      <div class="listen-btn" id="listenBtn" onclick="toggleListen()">
-        <div class="mic-icon">🎤</div>
-        <div class="mic-label">PRESS & SPEAK</div>
+
+    <!-- permission row -->
+    <div class="perm-row" id="permRow">
+      <div class="perm-dot" id="permDot"></div>
+      <div class="perm-text" id="permText">MICROPHONE — not yet granted</div>
+      <button class="perm-btn" id="permBtn" onclick="requestMic()">Grant</button>
+    </div>
+
+    <div class="listen-center">
+      <div class="pulse-ring" id="pulseRing">
+        <div class="main-orb" id="mainOrb" onclick="toggleListenMode()">
+          <div class="wave-bars" id="waveBars">
+            <div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+          </div>
+          <div class="orb-icon" id="orbIcon">🎤</div>
+          <div class="orb-label" id="orbLabel">TAP TO START</div>
+        </div>
       </div>
 
-      <div class="status-box" id="statusBox">
-        <div class="status-msg" id="statusMsg">थिच्नुस् र बोल्नुस्</div>
-        <div class="status-heard" id="statusHeard"></div>
+      <div class="status-strip" id="statusStrip">
+        <div class="s-msg"  id="sMsg">माइक permission दिनुस् र Start थिच्नुस्</div>
+        <div class="s-heard" id="sHeard"></div>
       </div>
     </div>
 
-    <!-- how to use -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-top:4px;">
-      <div style="font-family:var(--font-en);font-size:0.65rem;color:var(--muted);letter-spacing:1.5px;margin-bottom:10px;">HOW TO USE</div>
-      <div style="display:flex;flex-direction:column;gap:8px;font-size:0.9rem;color:var(--muted);line-height:1.5;">
-        <div>① <b style="color:var(--text)">सम्पर्क</b> tab मा जानुस् → नाम र नम्बर थप्नुस्</div>
-        <div>② <b style="color:var(--accent)">🎙 Record</b> बटन थिच्नुस् → आवाज command रेकर्ड गर्नुस्</div>
-        <div>③ यहाँ <b style="color:var(--green)">🎤</b> थिच्नुस् → त्यही command भन्नुस् → auto call! 📞</div>
-      </div>
+    <div class="howto">
+      <div class="howto-title">HOW IT WORKS</div>
+      <div class="howto-step"><span class="num">①</span><span><b>सम्पर्क</b> tab → नाम/नम्बर थप्नुस् → <b>🎙</b> थिचेर command record गर्नुस्</span></div>
+      <div class="howto-step"><span class="num">②</span><span>यहाँ एकपटक <b>Start</b> थिच्नुस् — app सधैं सुनिरहन्छ</span></div>
+      <div class="howto-step"><span class="num">③</span><span>command भन्नुस् → <b>automatic dial</b> खुल्छ! एकपटक call थिच्नुस्</span></div>
+      <div class="howto-step"><span class="num">⚠️</span><span style="color:#6b6b8a;">Browser security कारण auto-press गर्न सकिँदैन — number ready हुन्छ, एकपटक call गर्नुस्</span></div>
     </div>
   </div>
 
   <!-- ── CONTACTS TAB ── -->
   <div class="section" id="tab-contacts">
-    <div class="contacts-header">
+    <div class="contacts-hdr">
       <span>सम्पर्क सूची</span>
       <button class="add-btn" onclick="openAddModal()">+ थप्नुस्</button>
     </div>
@@ -285,7 +365,7 @@
 
 </div><!-- /app -->
 
-<!-- ── ADD CONTACT MODAL ── -->
+<!-- ADD CONTACT MODAL -->
 <div class="modal-bg" id="addModal">
   <div class="modal">
     <h2>नयाँ सम्पर्क थप्नुस्</h2>
@@ -304,16 +384,16 @@
   </div>
 </div>
 
-<!-- ── RECORD COMMAND MODAL ── -->
-<div class="modal-bg rec-modal" id="recModal">
+<!-- RECORD COMMAND MODAL -->
+<div class="modal-bg" id="recModal">
   <div class="modal">
-    <h2>🎙 आवाज Command रेकर्ड गर्नुस्</h2>
+    <h2>🎙 आवाज Command रेकर्ड</h2>
     <div class="rec-step">
-      <p id="recInstruction">तलको बटन थिचेर आफ्नो भाषामा command भन्नुस्<br>जुन पटक भन्दा पनि यो व्यक्तिलाई call जान्छ</p>
-      <div class="example" id="recExample">"मेरो दाइलाई फोन गर्"</div>
-      <div class="rec-big-btn" id="recBtn" onclick="toggleRecord()">
+      <p id="recInstruction">बटन थिचेर आफ्नो command भन्नुस्।<br>जुन पटक त्यही command भन्यो — call हुन्छ।</p>
+      <div class="rec-example" id="recExample">"मेरो दाइलाई फोन गर्"</div>
+      <div class="rec-orb" id="recOrb" onclick="toggleRecord()">
         <span id="recIcon">🎙</span>
-        <small id="recBtnLabel">HOLD TO RECORD</small>
+        <small id="recOrbLabel">HOLD</small>
       </div>
       <div class="rec-result" id="recResult"></div>
     </div>
@@ -324,385 +404,430 @@
   </div>
 </div>
 
-<!-- ── CALLING OVERLAY ── -->
+<!-- CALLING OVERLAY -->
 <div class="calling-overlay" id="callingOverlay">
   <div class="calling-avatar" id="callingAvatar">👤</div>
   <div class="calling-name"  id="callingName"></div>
-  <div class="calling-label">Calling…</div>
+  <div class="calling-label" id="callingLabel">Dialing…</div>
+  <div class="calling-tip">Phone खुल्दैछ — एकपटक call बटन थिच्नुस्</div>
 </div>
 
-<!-- ── TOAST ── -->
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ─────────────────────────────────────────────────────────────────────────────
-// STATE
-// ─────────────────────────────────────────────────────────────────────────────
+// ── STATE ──────────────────────────────────────────────────────────────────
 let contacts = JSON.parse(localStorage.getItem('nvc_contacts') || '[]');
-let isListening   = false;
-let isRecording   = false;
-let recognition   = null;
+let listenMode = false;          // always-on mode on/off
+let isSpeechActive = false;      // recognition currently running
+let recognition = null;
 let recRecognition = null;
+let isRecording = false;
 let currentRecContactId = null;
-let pendingCommand = '';    // transcribed text from recording
-let callTimeout   = null;
+let pendingCommand = '';
+let micGranted = false;
+let deferredInstall = null;
+let restartTimer = null;
+let silenceAfterMatch = false;   // pause loop briefly after a match
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SPEECH RECOGNITION SETUP
-// ─────────────────────────────────────────────────────────────────────────────
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-function makeRecognition(lang, onResult, onEnd) {
-  if (!SpeechRecognition) return null;
-  const r = new SpeechRecognition();
-  r.lang = lang;
-  r.continuous = false;
-  r.interimResults = false;
-  r.maxAlternatives = 5;
-  r.onresult = (e) => {
-    const results = [];
-    for (let i = 0; i < e.results[0].length; i++) results.push(e.results[0][i].transcript);
-    onResult(results);
-  };
-  r.onend = onEnd;
-  r.onerror = (e) => { console.warn('STT error', e.error); onEnd(); };
-  return r;
+// ── PWA install prompt ─────────────────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredInstall = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').classList.remove('show');
+  toast('App install भयो! 🎉', 'green');
+});
+
+async function installPWA() {
+  if (!deferredInstall) {
+    toast('Chrome menu → "Add to Home screen" थिच्नुस्', 'gold');
+    return;
+  }
+  deferredInstall.prompt();
+  const { outcome } = await deferredInstall.userChoice;
+  if (outcome === 'accepted') { document.getElementById('installBanner').classList.remove('show'); deferredInstall = null; }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LEVENSHTEIN / SIMILARITY
-// ─────────────────────────────────────────────────────────────────────────────
+// ── MIC PERMISSION ─────────────────────────────────────────────────────────
+async function requestMic() {
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+    setMicGranted(true);
+    toast('Microphone access मिल्यो! ✅', 'green');
+  } catch(e) {
+    setMicGranted(false);
+    toast('Microphone blocked! Settings मा allow गर्नुस्', 'red');
+  }
+}
+
+function setMicGranted(ok) {
+  micGranted = ok;
+  document.getElementById('permDot').className = 'perm-dot ' + (ok ? 'granted' : 'denied');
+  document.getElementById('permText').textContent = ok
+    ? 'MICROPHONE — granted ✓'
+    : 'MICROPHONE — tap to grant';
+  document.getElementById('permBtn').style.display = ok ? 'none' : '';
+}
+
+// check existing permission
+(async () => {
+  try {
+    const ps = await navigator.permissions.query({ name: 'microphone' });
+    if (ps.state === 'granted') setMicGranted(true);
+    ps.onchange = () => setMicGranted(ps.state === 'granted');
+  } catch {}
+})();
+
+// ── SIMILARITY ─────────────────────────────────────────────────────────────
 function lev(a, b) {
   a = a.toLowerCase(); b = b.toLowerCase();
   const dp = Array.from({length: b.length+1}, (_,i) => i);
   for (let i = 1; i <= a.length; i++) {
     let prev = i;
     for (let j = 1; j <= b.length; j++) {
-      const v = a[i-1] === b[j-1] ? dp[j-1] : 1 + Math.min(dp[j], dp[j-1], prev);
+      const v = a[i-1]===b[j-1] ? dp[j-1] : 1+Math.min(dp[j],dp[j-1],prev);
       dp[j-1] = prev; prev = v;
     }
     dp[b.length] = prev;
   }
   return dp[b.length];
 }
-
 function sim(a, b) {
-  if (!a || !b) return 0;
+  if (!a||!b) return 0;
   a = a.toLowerCase().trim(); b = b.toLowerCase().trim();
-  if (a === b) return 1;
-  if (a.includes(b) || b.includes(a)) return 0.9;
-  const d = lev(a, b);
-  return Math.max(0, 1 - d / Math.max(a.length, b.length));
+  if (a===b) return 1;
+  if (a.includes(b)||b.includes(a)) return 0.88;
+  return Math.max(0, 1 - lev(a,b)/Math.max(a.length,b.length));
+}
+function findMatch(list) {
+  let best=null, bestScore=0;
+  for (const c of contacts) {
+    if (!c.commands||!c.commands.length) continue;
+    for (const cmd of c.commands)
+      for (const spoken of list) {
+        const s = sim(spoken, cmd);
+        if (s>bestScore) { bestScore=s; best=c; }
+      }
+  }
+  return bestScore>=0.58 ? {contact:best, score:bestScore} : null;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MATCH SPOKEN TEXT AGAINST RECORDED COMMANDS
-// ─────────────────────────────────────────────────────────────────────────────
-function findMatch(spokenList) {
-  let best = null, bestScore = 0;
+// ── ALWAYS-ON LISTEN ENGINE ─────────────────────────────────────────────────
+function toggleListenMode() {
+  if (!micGranted) { requestMic(); return; }
+  if (!SpeechRec) { setStatus('err','⚠️ Chrome browser प्रयोग गर्नुस्',''); toast('Chrome मात्र support गर्छ','red'); return; }
 
-  for (const contact of contacts) {
-    if (!contact.commands || contact.commands.length === 0) continue;
+  const hasCmd = contacts.some(c=>c.commands&&c.commands.length>0);
+  if (!hasCmd) { setStatus('err','⚠️ पहिले command record गर्नुस्!','Contacts → 🎙 थिच्नुस्'); toast('पहिले voice command record गर्नुस्','red'); return; }
 
-    for (const cmd of contact.commands) {
-      for (const spoken of spokenList) {
-        const score = sim(spoken, cmd);
-        if (score > bestScore) { bestScore = score; best = contact; }
-      }
+  if (listenMode) { stopListenMode(); } else { startListenMode(); }
+}
+
+function startListenMode() {
+  listenMode = true;
+  silenceAfterMatch = false;
+  updateOrbUI();
+  setStatus('info','🟢 सुनिरहेको छु — बोल्नुस्!','always-on mode');
+  runRecognitionCycle();
+}
+
+function stopListenMode() {
+  listenMode = false;
+  clearTimeout(restartTimer);
+  if (recognition) { try { recognition.abort(); } catch {} recognition = null; }
+  isSpeechActive = false;
+  updateOrbUI();
+  setStatus('','थिच्नुस् र Start गर्नुस्','');
+}
+
+function runRecognitionCycle() {
+  if (!listenMode || silenceAfterMatch) return;
+
+  recognition = new SpeechRec();
+  recognition.lang = 'ne-NP';
+  recognition.continuous = false;    // one utterance at a time, restart loop
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 6;
+
+  recognition.onstart = () => {
+    isSpeechActive = true;
+    setStatus('info','🎤 सुनिरहेको छु…','बोल्नुस्…');
+    updateOrbUI();
+  };
+
+  recognition.onresult = (e) => {
+    const alts = [];
+    for (let i=0;i<e.results[0].length;i++) alts.push(e.results[0][i].transcript);
+    const heard = alts[0]||'';
+    setStatus('info','⚙️ मिलाउँदैछु…',`सुनियो: "${heard}"`);
+
+    const match = findMatch(alts);
+    if (match) {
+      setStatus('ok',`📞 ${match.contact.name}`,match.contact.phone);
+      silenceAfterMatch = true;
+      setTimeout(() => { callContact(match.contact); }, 300);
+      setTimeout(() => {
+        silenceAfterMatch = false;
+        if (listenMode) runRecognitionCycle();
+      }, 5000);
+    } else {
+      setStatus('err','❌ command भेटिएन',`भनेको: "${heard}" — फेरि प्रयास गर्नुस्`);
     }
-  }
+  };
 
-  return bestScore >= 0.60 ? { contact: best, score: bestScore } : null;
-}
+  recognition.onend = () => {
+    isSpeechActive = false;
+    updateOrbUI();
+    if (listenMode && !silenceAfterMatch) {
+      // brief pause then restart loop
+      restartTimer = setTimeout(runRecognitionCycle, 600);
+    }
+  };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CALL
-// ─────────────────────────────────────────────────────────────────────────────
-function callContact(contact) {
-  // Show calling overlay
-  document.getElementById('callingName').textContent = contact.name;
-  document.getElementById('callingAvatar').textContent = contact.name.charAt(0);
-  document.getElementById('callingOverlay').classList.add('show');
+  recognition.onerror = (e) => {
+    isSpeechActive = false;
+    if (e.error === 'not-allowed') {
+      setMicGranted(false); stopListenMode();
+      setStatus('err','⚠️ Microphone blocked','Settings मा allow गर्नुस्');
+      return;
+    }
+    if (e.error === 'no-speech') {
+      // normal — restart quietly
+    } else {
+      console.warn('STT error', e.error);
+    }
+    updateOrbUI();
+    if (listenMode && !silenceAfterMatch) {
+      restartTimer = setTimeout(runRecognitionCycle, 800);
+    }
+  };
 
-  // Speak in Nepali
-  speak(`${contact.name} लाई फोन गर्दैछु`, () => {
-    const tel = 'tel:' + contact.phone.replace(/[^0-9+]/g, '');
-    window.location.href = tel;
-    setTimeout(() => document.getElementById('callingOverlay').classList.remove('show'), 4000);
-  });
-}
-
-function speak(text, cb) {
-  if (!window.speechSynthesis) { cb && cb(); return; }
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'ne-NP'; u.rate = 0.88; u.pitch = 1;
-  u.onend = () => cb && cb();
-  window.speechSynthesis.speak(u);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN LISTEN TOGGLE
-// ─────────────────────────────────────────────────────────────────────────────
-function toggleListen() {
-  if (isListening) { stopListen(); return; }
-
-  if (!SpeechRecognition) {
-    setStatus('err', '⚠️ यो browser ले voice support गर्दैन', '');
-    toast('Chrome browser प्रयोग गर्नुस्', 'red');
-    return;
-  }
-
-  const hasCommands = contacts.some(c => c.commands && c.commands.length > 0);
-  if (!hasCommands) {
-    setStatus('err', '⚠️ पहिले command record गर्नुस्!', 'सम्पर्क tab मा जानुस् → 🎙 थिच्नुस्');
-    toast('पहिले voice command record गर्नुस्', 'red');
-    return;
-  }
-
-  recognition = makeRecognition('ne-NP',
-    (results) => {
-      const heard = results[0] || '';
-      setStatus('info', '⚙️ मिलाउँदैछु…', `सुनियो: "${heard}"`);
-
-      const match = findMatch(results);
-      if (match) {
-        setStatus('ok', `📞 ${match.contact.name}`, match.contact.phone);
-        stopListen();
-        setTimeout(() => callContact(match.contact), 600);
-      } else {
-        setStatus('err', '❌ नाम भेटिएन', `भनेको: "${heard}" — फेरि प्रयास गर्नुस्`);
-        speak('त्यो command भेटिएन, फेरि भन्नुस्');
-        stopListen();
-      }
-    },
-    () => { isListening = false; updateListenUI(); }
-  );
-
-  // Try Nepali first, fall back to auto-detect
-  try {
-    recognition.start();
-    isListening = true;
-    updateListenUI();
-    setStatus('', '🎤 सुनिरहेको छु…', 'अब बोल्नुस्…');
-    speak('बोल्नुस्');
-  } catch(e) {
-    // fallback to no lang
-    recognition.lang = '';
-    try { recognition.start(); isListening = true; updateListenUI(); } catch(e2) {}
+  try { recognition.start(); }
+  catch(e) {
+    // already started or unsupported
+    restartTimer = setTimeout(runRecognitionCycle, 1000);
   }
 }
 
-function stopListen() {
-  if (recognition) { try { recognition.stop(); } catch {} }
-  isListening = false;
-  updateListenUI();
-}
+function updateOrbUI() {
+  const orb  = document.getElementById('mainOrb');
+  const ring = document.getElementById('pulseRing');
+  const icon = document.getElementById('orbIcon');
+  const lbl  = document.getElementById('orbLabel');
+  const bars = document.getElementById('waveBars');
 
-function updateListenUI() {
-  const btn = document.getElementById('listenBtn');
-  btn.classList.toggle('listening', isListening);
+  if (listenMode) {
+    orb.classList.add('active');
+    ring.classList.add('active');
+    icon.style.display = isSpeechActive ? 'none' : '';
+    bars.classList.toggle('show', isSpeechActive);
+    lbl.textContent = isSpeechActive ? 'LISTENING…' : 'ALWAYS ON';
+    lbl.style.color = isSpeechActive ? '' : 'var(--green)';
+  } else {
+    orb.classList.remove('active','hearing');
+    ring.classList.remove('active');
+    icon.style.display = '';
+    bars.classList.remove('show');
+    lbl.textContent = 'TAP TO START';
+    lbl.style.color = '';
+  }
 }
 
 function setStatus(type, msg, heard) {
-  const box = document.getElementById('statusBox');
-  box.className = 'status-box' + (type ? ' ' + type : '');
-  document.getElementById('statusMsg').innerHTML = `<span class="status-msg">${msg}</span>`;
-  document.getElementById('statusHeard').textContent = heard || '';
+  const box = document.getElementById('statusStrip');
+  box.className = 'status-strip' + (type ? ' '+type : '');
+  document.getElementById('sMsg').innerHTML = msg;
+  document.getElementById('sHeard').textContent = heard||'';
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RECORD COMMAND
-// ─────────────────────────────────────────────────────────────────────────────
+// ── CALL ────────────────────────────────────────────────────────────────────
+function callContact(contact) {
+  const ov = document.getElementById('callingOverlay');
+  document.getElementById('callingName').textContent = contact.name;
+  document.getElementById('callingAvatar').textContent = contact.name.charAt(0);
+  ov.classList.add('show');
+
+  const tel = 'tel:' + contact.phone.replace(/[^0-9+]/g,'');
+
+  // Try to open dialer immediately
+  window.location.href = tel;
+
+  // Speak name
+  speak(`${contact.name} लाई फोन गर्दैछु`);
+
+  // Hide overlay after a moment
+  setTimeout(() => ov.classList.remove('show'), 5000);
+}
+
+function speak(text, cb) {
+  if (!window.speechSynthesis) { cb&&cb(); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang='ne-NP'; u.rate=0.9; u.pitch=1;
+  u.onend = ()=>cb&&cb();
+  window.speechSynthesis.speak(u);
+}
+
+// ── RECORD COMMAND ──────────────────────────────────────────────────────────
 function openRecModal(contactId) {
-  currentRecContactId = contactId;
-  pendingCommand = '';
-  const contact = contacts.find(c => c.id === contactId);
-
+  currentRecContactId = contactId; pendingCommand = '';
+  const c = contacts.find(x=>x.id===contactId);
   document.getElementById('recInstruction').textContent =
-    `"${contact.name}" लाई call गर्न आफ्नै भाषामा command भन्नुस्। जुन पटक त्यो command भन्यो — call हुन्छ।`;
+    `"${c.name}" लाई call गर्न आफ्नो command भन्नुस्। जुन पटक त्यही भन्यो — dial हुन्छ।`;
   document.getElementById('recExample').textContent =
-    `उदाहरण: "मेरो ${contact.name}लाई फोन गर्" वा "${contact.name} call"`;
+    `"${c.name}लाई फोन गर्" वा "${c.name} call गर्"`;
   document.getElementById('recResult').textContent = '';
-  document.getElementById('recBtn').className = 'rec-big-btn';
+  document.getElementById('recOrb').className = 'rec-orb';
   document.getElementById('recIcon').textContent = '🎙';
-  document.getElementById('recBtnLabel').textContent = 'HOLD TO RECORD';
-
+  document.getElementById('recOrbLabel').textContent = 'TAP TO REC';
   document.getElementById('recModal').classList.add('open');
 }
 
 function toggleRecord() {
   if (isRecording) { stopRecording(); return; }
+  if (!SpeechRec) { toast('Voice support छैन','red'); return; }
 
-  if (!SpeechRecognition) { toast('Voice support छैन', 'red'); return; }
+  recRecognition = new SpeechRec();
+  recRecognition.lang = 'ne-NP';
+  recRecognition.continuous = false; recRecognition.interimResults = false; recRecognition.maxAlternatives = 5;
+  recRecognition.onresult = (e) => {
+    pendingCommand = e.results[0][0].transcript || '';
+    document.getElementById('recResult').textContent = `✅ "${pendingCommand}"`;
+    document.getElementById('recOrb').classList.add('done');
+    document.getElementById('recIcon').textContent = '✅';
+    stopRecording();
+  };
+  recRecognition.onend = () => { isRecording=false; updateRecUI(); };
+  recRecognition.onerror = (e) => { console.warn('rec error',e.error); isRecording=false; updateRecUI(); };
 
-  recRecognition = makeRecognition('ne-NP',
-    (results) => {
-      pendingCommand = results[0] || '';
-      document.getElementById('recResult').textContent = `✅ "${pendingCommand}"`;
-      document.getElementById('recBtn').classList.add('done');
-      document.getElementById('recIcon').textContent = '✅';
-      stopRecording();
-    },
-    () => { isRecording = false; updateRecUI(); }
-  );
-
-  try {
-    recRecognition.start();
-    isRecording = true; updateRecUI();
-  } catch {
-    recRecognition.lang = '';
-    try { recRecognition.start(); isRecording = true; updateRecUI(); } catch {}
-  }
+  try { recRecognition.start(); isRecording=true; updateRecUI(); }
+  catch { toast('Microphone busy, retry','red'); }
 }
 
 function stopRecording() {
   if (recRecognition) { try { recRecognition.stop(); } catch {} }
-  isRecording = false; updateRecUI();
+  isRecording=false; updateRecUI();
 }
 
 function updateRecUI() {
-  const btn = document.getElementById('recBtn');
+  const orb = document.getElementById('recOrb');
   if (isRecording) {
-    btn.classList.add('recording');
+    orb.classList.add('recording'); orb.classList.remove('done');
     document.getElementById('recIcon').textContent = '🔴';
-    document.getElementById('recBtnLabel').textContent = 'RECORDING…';
+    document.getElementById('recOrbLabel').textContent = 'RECORDING';
     document.getElementById('recResult').textContent = 'सुनिरहेको छु…';
-  } else if (!btn.classList.contains('done')) {
-    btn.classList.remove('recording');
+  } else if (!orb.classList.contains('done')) {
+    orb.classList.remove('recording');
     document.getElementById('recIcon').textContent = '🎙';
-    document.getElementById('recBtnLabel').textContent = 'HOLD TO RECORD';
+    document.getElementById('recOrbLabel').textContent = 'TAP TO REC';
   }
 }
 
 function saveCommand() {
-  if (!pendingCommand) { toast('पहिले record गर्नुस्', 'red'); return; }
-  const idx = contacts.findIndex(c => c.id === currentRecContactId);
-  if (idx === -1) return;
-  if (!contacts[idx].commands) contacts[idx].commands = [];
+  if (!pendingCommand) { toast('पहिले record गर्नुस्','red'); return; }
+  const idx = contacts.findIndex(c=>c.id===currentRecContactId);
+  if (idx===-1) return;
+  if (!contacts[idx].commands) contacts[idx].commands=[];
   contacts[idx].commands.push(pendingCommand);
-  saveContacts();
-  renderContacts();
-  closeModal('recModal');
-  toast(`Command "${pendingCommand}" सुरक्षित!`, 'green');
+  saveContacts(); renderContacts(); closeModal('recModal');
+  toast(`"${pendingCommand}" command सुरक्षित! ✅`,'green');
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONTACT CRUD
-// ─────────────────────────────────────────────────────────────────────────────
+// ── CONTACT CRUD ────────────────────────────────────────────────────────────
 function openAddModal() {
-  document.getElementById('inp-name').value = '';
-  document.getElementById('inp-phone').value = '';
+  document.getElementById('inp-name').value='';
+  document.getElementById('inp-phone').value='';
   document.getElementById('addModal').classList.add('open');
-  setTimeout(() => document.getElementById('inp-name').focus(), 300);
+  setTimeout(()=>document.getElementById('inp-name').focus(),300);
 }
-
 function saveContact() {
   const name  = document.getElementById('inp-name').value.trim();
   const phone = document.getElementById('inp-phone').value.trim();
-  if (!name || !phone) { toast('नाम र नम्बर दुवै भर्नुस्', 'red'); return; }
-
-  contacts.push({ id: Date.now().toString(), name, phone, commands: [] });
-  saveContacts();
-  renderContacts();
-  closeModal('addModal');
-  toast(`${name} थपियो!`, 'green');
+  if (!name||!phone) { toast('नाम र नम्बर दुवै भर्नुस्','red'); return; }
+  contacts.push({id:Date.now().toString(), name, phone, commands:[]});
+  saveContacts(); renderContacts(); closeModal('addModal');
+  toast(`${name} थपियो!`,'green');
 }
-
 function deleteContact(id) {
   if (!confirm('यो सम्पर्क मेटाउने?')) return;
-  contacts = contacts.filter(c => c.id !== id);
+  contacts=contacts.filter(c=>c.id!==id);
   saveContacts(); renderContacts();
 }
-
-function deleteCommand(contactId, cmdIndex) {
-  const idx = contacts.findIndex(c => c.id === contactId);
-  if (idx === -1) return;
-  contacts[idx].commands.splice(cmdIndex, 1);
+function deleteCommand(cid, i) {
+  const idx=contacts.findIndex(c=>c.id===cid);
+  if (idx===-1) return;
+  contacts[idx].commands.splice(i,1);
   saveContacts(); renderContacts();
 }
+function saveContacts() { localStorage.setItem('nvc_contacts', JSON.stringify(contacts)); }
 
-function saveContacts() {
-  localStorage.setItem('nvc_contacts', JSON.stringify(contacts));
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// RENDER
-// ─────────────────────────────────────────────────────────────────────────────
+// ── RENDER ──────────────────────────────────────────────────────────────────
 function renderContacts() {
   const list = document.getElementById('contactList');
-  if (contacts.length === 0) {
-    list.innerHTML = `<div class="empty"><div>👥</div><p>अझै सम्पर्क छैन।<br>माथि <b>+ थप्नुस्</b> थिच्नुस्।</p></div>`;
+  if (!contacts.length) {
+    list.innerHTML='<div class="empty"><div>👥</div><p>अझै सम्पर्क छैन।<br>माथि <b>+ थप्नुस्</b> थिच्नुस्।</p></div>';
     return;
   }
-
   list.innerHTML = contacts.map(c => {
-    const cmds = (c.commands || []);
-    const cmdHtml = cmds.length > 0
-      ? cmds.map((cmd, i) => `
-          <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(74,232,160,0.08);
-            border:1px solid rgba(74,232,160,0.2);border-radius:6px;padding:3px 8px;
-            font-size:0.75rem;color:var(--green);margin:3px 3px 0 0;font-style:italic;">
-            🎙 ${cmd}
-            <span onclick="deleteCommand('${c.id}',${i})" style="cursor:pointer;color:var(--red);font-size:0.9rem;font-style:normal;">×</span>
-          </span>`).join('')
-      : `<span style="font-size:0.75rem;color:var(--muted);font-style:italic;">command नराखिएको</span>`;
-
+    const cmds = c.commands||[];
+    const cmdHtml = cmds.length
+      ? cmds.map((cmd,i)=>`<span class="cmd-pill">🎙 ${cmd}<span class="cmd-del" onclick="deleteCommand('${c.id}',${i})">×</span></span>`).join('')
+      : `<span class="no-cmd">command नराखिएको</span>`;
     return `
-    <div class="contact-card ${cmds.length > 0 ? 'has-cmd' : ''}">
-      <div class="contact-avatar">${c.name.charAt(0)}</div>
-      <div class="contact-info">
-        <div class="contact-name">${c.name}</div>
-        <div class="contact-phone">${c.phone}</div>
-        <div style="margin-top:5px;">${cmdHtml}</div>
+    <div class="contact-card ${cmds.length?'has-cmd':''}">
+      <div class="c-avatar">${c.name.charAt(0)}</div>
+      <div class="c-info">
+        <div class="c-name">${c.name}</div>
+        <div class="c-phone">${c.phone}</div>
+        <div class="c-cmds">${cmdHtml}</div>
       </div>
-      <div class="contact-actions">
-        <button class="icon-btn rec"  onclick="openRecModal('${c.id}')" title="Command record">🎙</button>
-        <button class="icon-btn call" onclick="callContact(contacts.find(x=>x.id==='${c.id}'))" title="Call">📞</button>
+      <div class="c-actions">
+        <button class="icon-btn rec"  onclick="openRecModal('${c.id}')" title="Record command">🎙</button>
+        <button class="icon-btn call" onclick="callContact(contacts.find(x=>x.id==='${c.id}'))" title="Call now">📞</button>
         <button class="icon-btn del"  onclick="deleteContact('${c.id}')" title="Delete">🗑</button>
       </div>
     </div>`;
   }).join('');
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TABS / MODAL HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
+// ── UI HELPERS ───────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['call','contacts'][i] === tab));
-  document.querySelectorAll('.section').forEach((s,i) => s.classList.toggle('active', ['tab-call','tab-contacts'][i] === 'tab-'+tab));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['call','contacts'][i]===tab));
+  document.querySelectorAll('.section').forEach((s,i)=>s.classList.toggle('active',['tab-call','tab-contacts'][i]==='tab-'+tab));
+  if (tab==='contacts') renderContacts();
 }
-
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
-  if (id === 'recModal') { stopRecording(); pendingCommand = ''; }
+  if (id==='recModal') { stopRecording(); pendingCommand=''; }
 }
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)closeModal(bg.id);}));
 
-// Close modal on backdrop click
-document.querySelectorAll('.modal-bg').forEach(bg =>
-  bg.addEventListener('click', e => { if (e.target === bg) closeModal(bg.id); })
-);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TOAST
-// ─────────────────────────────────────────────────────────────────────────────
 let toastTimer;
-function toast(msg, type = '') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast show ' + type;
+function toast(msg, type='') {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast show '+type;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.className = 'toast ' + type, 2800);
+  toastTimer=setTimeout(()=>el.className='toast '+type, 3000);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// INIT
-// ─────────────────────────────────────────────────────────────────────────────
-renderContacts();
-setStatus('', 'थिच्नुस् र बोल्नुस्', '');
+// keep speech synthesis alive on mobile (iOS workaround)
+document.addEventListener('visibilitychange', ()=>{
+  if (document.hidden && listenMode) {
+    // page backgrounded — restart will happen when visible again
+    clearTimeout(restartTimer);
+    if (recognition) { try { recognition.abort(); } catch {} }
+  } else if (!document.hidden && listenMode) {
+    setTimeout(runRecognitionCycle, 500);
+  }
+});
 
-// Greet on load
-setTimeout(() => speak('नमस्ते! कसलाई फोन गर्ने?'), 800);
+// ── INIT ─────────────────────────────────────────────────────────────────────
+renderContacts();
+setTimeout(()=>speak('नमस्ते! Start थिच्नुस् र कसलाई फोन गर्ने — भन्नुस्।'), 1200);
 </script>
 </body>
 </html>
