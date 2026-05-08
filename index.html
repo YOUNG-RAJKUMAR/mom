@@ -323,7 +323,7 @@ body {
     <div class="perm-row" id="permRow">
       <div class="perm-dot" id="permDot"></div>
       <div class="perm-text" id="permText">MICROPHONE — not yet granted</div>
-      <button class="perm-btn" id="permBtn" onclick="requestMic()">Grant</button>
+      <button class="perm-btn" id="permBtn" onclick="requestMic(true)">Grant & Start</button>
     </div>
 
     <div class="listen-center">
@@ -453,14 +453,15 @@ async function installPWA() {
 }
 
 // ── MIC PERMISSION ─────────────────────────────────────────────────────────
-async function requestMic() {
+async function requestMic(thenStart) {
   try {
     await navigator.mediaDevices.getUserMedia({ audio: true });
     setMicGranted(true);
     toast('Microphone access मिल्यो! ✅', 'green');
+    if (thenStart && !listenMode) startListenMode();
   } catch(e) {
     setMicGranted(false);
-    toast('Microphone blocked! Settings मा allow गर्नुस्', 'red');
+    toast('Microphone blocked! Settings → Site Settings → Mic → Allow', 'red');
   }
 }
 
@@ -518,13 +519,20 @@ function findMatch(list) {
 
 // ── ALWAYS-ON LISTEN ENGINE ─────────────────────────────────────────────────
 function toggleListenMode() {
-  if (!micGranted) { requestMic(); return; }
-  if (!SpeechRec) { setStatus('err','⚠️ Chrome browser प्रयोग गर्नुस्',''); toast('Chrome मात्र support गर्छ','red'); return; }
+  if (!SpeechRec) {
+    setStatus('err','⚠️ Chrome browser प्रयोग गर्नुस्','');
+    toast('Chrome मात्र support गर्छ','red');
+    return;
+  }
+  if (listenMode) { stopListenMode(); return; }
 
+  // Just start — browser will ask for mic if needed. No pre-checks that block.
   const hasCmd = contacts.some(c=>c.commands&&c.commands.length>0);
-  if (!hasCmd) { setStatus('err','⚠️ पहिले command record गर्नुस्!','Contacts → 🎙 थिच्नुस्'); toast('पहिले voice command record गर्नुस्','red'); return; }
-
-  if (listenMode) { stopListenMode(); } else { startListenMode(); }
+  if (!hasCmd) {
+    // Warn but still start listening so user can at least test it
+    toast('⚠️ पहिले Contacts मा 🎙 command record गर्नुस्','gold');
+  }
+  startListenMode();
 }
 
 function startListenMode() {
@@ -592,7 +600,8 @@ function runRecognitionCycle() {
     isSpeechActive = false;
     if (e.error === 'not-allowed') {
       setMicGranted(false); stopListenMode();
-      setStatus('err','⚠️ Microphone blocked','Settings मा allow गर्नुस्');
+      setStatus('err','⚠️ Microphone blocked','Chrome Settings → Site Settings → Mic → Allow');
+      toast('Chrome Settings → Mic → Allow गर्नुस्','red');
       return;
     }
     if (e.error === 'no-speech') {
